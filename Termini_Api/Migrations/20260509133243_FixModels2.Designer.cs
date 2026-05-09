@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Termini_Api.TerminiDbContext;
@@ -11,9 +12,11 @@ using Termini_Api.TerminiDbContext;
 namespace Termini_Api.Migrations
 {
     [DbContext(typeof(TerminiDBContext))]
-    partial class TerminiDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260509133243_FixModels2")]
+    partial class FixModels2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
