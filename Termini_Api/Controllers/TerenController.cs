@@ -89,7 +89,7 @@ namespace Termini_Api.Controllers
             try
             {
                 var terens = await _terminiDBContext.Terens
-                                                    .Where(t => t.Client.ClientId == clientId)
+                                                    .Where(t => t.Client.UserId == clientId)
                                                     .ToListAsync();
                 return Ok(terens);
             }

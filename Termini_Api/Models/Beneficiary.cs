@@ -2,6 +2,6 @@
 {
     public class Beneficiary : User
     {
-        public long BeneficiaryId { get; set; }
+        // Use UserId from base class; do not declare BeneficiaryId
     }
 }

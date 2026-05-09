@@ -1,0 +1,23 @@
+INSERT INTO public."Cities"("CityId", "CityName")
+VALUES (1,'Beograd'),
+       (2,'Cacak'),
+	   (3,'Novi Sad'),
+	   (4,'Nis'),
+	   (5,'Kragujevac'),
+	   (6,'Subotica'),
+	   (7,'Novi Pazar')
+
+INSERT INTO public."Sports"(
+	"SportId", "SportName")
+	VALUES (1, 'Fudbal'),
+	       (2, 'Tenis'),
+		   (3, 'Kosarka'),
+		   (4, 'Padel'),
+		   (5, 'Stoni Tenis');	
+
+INSERT INTO public."Users"(
+	"UserId", "UserName", "UserEmail", "Password", "FName", "LName", "Discriminator", "BeneficiaryId", "ClientId")
+	VALUES (1, 'dante', 'djordjeantonovic@gmail.com', 'l520djordje', 'Djordje', 'Antonovic', 'Beneficiary', 1, NULL),
+	       (2, 'boki', 'bokib07@gmail.com', '1234', 'Bojan', 'Bogdanovic', 'Beneficiary', 2,NULL),
+		   (3, 'Kolos', 'kolos@gmail.com', '123456', 'KOLOS', '', 'Client', null, 1),
+		   (4, 'Olimp', 'olimp.bg@gmail.com', '98765', 'OLIMP', '', 'Client', null, 2);		   

@@ -1,9 +1,10 @@
-﻿namespace Termini_Api.Models
-{
-    public class Client:User
-    {
-        public long ClientId { get; set; }
+﻿using System.Collections.Generic;
 
-        public ICollection<Teren> Tereni { get; set; }
+namespace Termini_Api.Models
+{
+    public class Client : User
+    {
+        // Use UserId from base class; do not declare ClientId
+        public ICollection<Teren> Tereni { get; set; } = new List<Teren>();
     }
 }
