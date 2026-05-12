@@ -44,9 +44,9 @@ namespace Termini_Api.Controllers
                         OpenFrom = dto.OpenFrom,
                         OpenTo = dto.OpenTo,
                         ImageBase64 = dto.ImageBase64,
-                        City = city,
-                        Sport = sport,
-                        Client = client
+                        CityId = dto.CityId,
+                        SportId = dto.SportId,
+                        ClientId = dto.ClientId
                     };
 
                     terenEntities.Add(teren);
@@ -63,16 +63,16 @@ namespace Termini_Api.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost("GetFreeTerens")]
         public async Task<ActionResult> GetFreeTerens([FromBody] GetFreeTerensDateDTO dateDTO)
         {
             try
             {
                 var terens = await _terminiDBContext.Termins
-                                                    .Where(t => t.TerminOd != dateDTO.TerminOd && t.TerminDo != dateDTO.TerminDo)
+                                                    .Where(t => t.TerminDo <= dateDTO.TerminOd || t.TerminOd >= dateDTO.TerminDo)
                                                     .Select(t => t.Teren)
                                                     .ToListAsync();
-                var uniqueTerens = terens.Where(t => t.City.CityId == dateDTO.CityId).ToList();
+                var uniqueTerens = terens.Where(t => t.CityId == dateDTO.CityId).ToList();
 
                 return Ok(uniqueTerens);
             }

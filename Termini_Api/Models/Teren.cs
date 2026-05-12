@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Termini_Api.Models
 {
     public class Teren
     {
+        [Key]
         public long TerenId { get; set; }
         public string TerenName { get; set; } = string.Empty;
         public TimeSpan OpenFrom { get; set; }

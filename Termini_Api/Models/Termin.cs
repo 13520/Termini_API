@@ -1,9 +1,13 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Termini_Api.Models
 {
     public class Termin
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long TerminId { get; set; }
         public DateTime TerminOd { get; set; }
         public DateTime TerminDo { get; set; }
