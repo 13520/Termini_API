@@ -29,16 +29,35 @@ namespace Termini_Api.Controllers
                 // Mapiranje DTO → domain model
                 var terenEntities = new List<Teren>();
 
-                foreach (var dto in terens)
+                // Skupi sve ID-jeve unapred
+                var cityIds = terens.Select(t => t.CityId).Distinct();
+                var sportIds = terens.Select(t => t.SportId).Distinct();
+                var clientIds = terens.Select(t => t.ClientId).Distinct();
+
+                // Napuni hash tabele
+                var cities = await _terminiDBContext.Cities
+                    .Where(c => cityIds.Contains(c.CityId))
+                    .ToDictionaryAsync(c => c.CityId);
+
+                var sports = await _terminiDBContext.Sports
+                    .Where(s => sportIds.Contains(s.SportId))
+                    .ToDictionaryAsync(s => s.SportId);
+
+                var clients = await _terminiDBContext.Clients
+                    .Where(cl => clientIds.Contains(cl.UserId))
+                    .ToDictionaryAsync(cl => cl.UserId);
+
+                // Mapiranje preko LINQ-a
+                terenEntities = terens.Select(dto =>
                 {
-                    var city = await _terminiDBContext.Cities.FindAsync(dto.CityId);
-                    var sport = await _terminiDBContext.Sports.FindAsync(dto.SportId);
-                    var client = await _terminiDBContext.Clients.FindAsync(dto.ClientId);
+                    if (!cities.TryGetValue(dto.CityId, out var city) ||
+                        !sports.TryGetValue(dto.SportId, out var sport) ||
+                        !clients.TryGetValue(dto.ClientId, out var client))
+                    {
+                        throw new ArgumentException("Invalid CityId, SportId or ClientId.");
+                    }
 
-                    if (city == null || sport == null || client == null)
-                        return BadRequest("Invalid CityId, SportId or ClientId.");
-
-                    var teren = new Teren
+                    return new Teren
                     {
                         TerenName = dto.TerenName,
                         OpenFrom = dto.OpenFrom,
@@ -48,9 +67,8 @@ namespace Termini_Api.Controllers
                         SportId = dto.SportId,
                         ClientId = dto.ClientId
                     };
+                }).ToList();
 
-                    terenEntities.Add(teren);
-                }
 
                 await _terminiDBContext.Terens.AddRangeAsync(terenEntities);
                 await _terminiDBContext.SaveChangesAsync();
