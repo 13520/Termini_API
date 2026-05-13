@@ -72,7 +72,10 @@ namespace Termini_Api.Controllers
                                                     .Where(t => t.TerminDo <= dateDTO.TerminOd || t.TerminOd >= dateDTO.TerminDo)
                                                     .Select(t => t.Teren)
                                                     .ToListAsync();
-                var uniqueTerens = terens.Where(t => t.CityId == dateDTO.CityId).ToList();
+                var uniqueTerens = terens
+                                   .Where(t => t.CityId == dateDTO.CityId && t.SportId == dateDTO.SportId)
+                                   .DistinctBy(t => t.TerenId)
+                                   .ToList();
 
                 return Ok(uniqueTerens);
             }
