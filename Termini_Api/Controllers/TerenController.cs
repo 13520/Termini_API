@@ -126,5 +126,49 @@ namespace Termini_Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPut]
+        public async Task<ActionResult> UpdateTeren([FromBody] TerenDTO terenDTO)
+        {
+            try
+            {
+                var existingTeren = await _terminiDBContext.Terens.FindAsync(terenDTO.TerenId);
+                if (existingTeren == null)
+                    return NotFound("Teren not found.");
+                existingTeren.TerenName = terenDTO.TerenName;
+                existingTeren.OpenFrom = terenDTO.OpenFrom;
+                existingTeren.OpenTo = terenDTO.OpenTo;
+                existingTeren.ImageBase64 = terenDTO.ImageBase64;
+                existingTeren.CityId = terenDTO.CityId;
+                existingTeren.SportId = terenDTO.SportId;
+                existingTeren.ClientId = terenDTO.ClientId;
+                _terminiDBContext.Terens.Update(existingTeren);
+                await _terminiDBContext.SaveChangesAsync();
+                return Ok("Teren updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("{terenId}")]
+        public async Task<ActionResult> DeleteTeren(int terenId)
+        {
+            try
+            {
+                var teren = await _terminiDBContext.Terens.FindAsync(terenId);
+                if (teren == null)
+                    return NotFound("Teren not found.");
+                _terminiDBContext.Terens.Remove(teren);
+                await _terminiDBContext.SaveChangesAsync();
+                return Ok("Teren deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }
