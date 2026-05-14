@@ -153,7 +153,7 @@ namespace Termini_Api.Controllers
         }
 
         [HttpDelete("{terenId}")]
-        public async Task<ActionResult> DeleteTeren(int terenId)
+        public async Task<ActionResult> DeleteTeren(long terenId)
         {
             try
             {
