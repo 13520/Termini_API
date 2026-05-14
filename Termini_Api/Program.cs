@@ -1,11 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using System;
-using System.Threading;
-using Termini_Api;
 using Termini_Api.TerminiDbContext;
 
 
@@ -20,27 +14,32 @@ builder.Services.AddDbContext<TerminiDBContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DBConnection")));
 
 // RabbitMQ connection
-builder.Services.AddSingleton<IConnection>(sp =>
+// Build the RabbitMQ connection once at startup
+var factory = new ConnectionFactory
 {
-    var factory = new ConnectionFactory()
+    Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ"))
+};
+
+var connection = await factory.CreateConnectionAsync();
+builder.Services.AddSingleton<IConnection>(connection);
+
+// Register a channel factory using async API
+builder.Services.AddSingleton<Func<Task<IChannel>>>(sp =>
+{
+    var conn = sp.GetRequiredService<IConnection>();
+    return async () =>
     {
-        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ"))
+        var channel = await conn.CreateChannelAsync();
+        await channel.QueueDeclareAsync(
+            queue: "termins",
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+
+        return channel;
     };
-    return factory.CreateConnection();
 });
-
-builder.Services.AddSingleton<IModel>(sp =>
-{
-    var connection = sp.GetRequiredService<IConnection>();
-    var channel = connection.CreateModel();
-    channel.QueueDeclare(queue: "termins",
-                         durable: true,
-                         exclusive: false,
-                         autoDelete: false,
-                         arguments: null);
-    return channel;
-});
-
 // Background service za consumer
 builder.Services.AddHostedService<TerminConsumerService>();
 

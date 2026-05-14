@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
@@ -10,19 +8,20 @@ using Termini_Api.TerminiDbContext;
 
 public class TerminConsumerService : BackgroundService
 {
-    private readonly IModel _channel;
+    private readonly IChannel  _channel;
     private readonly IServiceProvider _serviceProvider;
 
-    public TerminConsumerService(IModel channel, IServiceProvider serviceProvider)
+    public TerminConsumerService(IChannel  channel, IServiceProvider serviceProvider)
     {
         _channel = channel;
         _serviceProvider = serviceProvider;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += async (model, ea) =>
+        var consumer = new  AsyncEventingBasicConsumer(_channel);
+ 
+        consumer.ReceivedAsync += async (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
@@ -37,7 +36,7 @@ public class TerminConsumerService : BackgroundService
             if (teren == null || beneficiary == null)
             {
                 // discard
-                return;
+                return ;
             }
 
             bool exists = db.Termins.Any(t =>
@@ -55,14 +54,15 @@ public class TerminConsumerService : BackgroundService
                     Beneficiary = beneficiary
                 };
 
-                await db.Termins.AddAsync(termin);
-                await db.SaveChangesAsync();
+                await db.Termins.AddAsync(termin,cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
             }
         };
 
-        _channel.BasicConsume(queue: "termins",
+        _channel.BasicConsumeAsync(queue: "termins",
                               autoAck: true,
-                              consumer: consumer);
+                              consumer: consumer,
+                              cancellationToken);
 
         return Task.CompletedTask;
     }
