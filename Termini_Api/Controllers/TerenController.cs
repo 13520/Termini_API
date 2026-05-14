@@ -86,22 +86,29 @@ namespace Termini_Api.Controllers
         {
             try
             {
-                var terens = await _terminiDBContext.Termins
-                                                    .Where(t => t.TerminDo <= dateDTO.TerminOd || t.TerminOd >= dateDTO.TerminDo)
-                                                    .Select(t => t.Teren)
-                                                    .ToListAsync();
-                var uniqueTerens = terens
-                                   .Where(t => t.CityId == dateDTO.CityId && t.SportId == dateDTO.SportId)
-                                   .DistinctBy(t => t.TerenId)
-                                   .ToList();
 
-                return Ok(uniqueTerens);
+                var allTerens = await _terminiDBContext.Terens
+                    .Where(t => t.CityId == dateDTO.CityId && t.SportId == dateDTO.SportId)
+                    .ToListAsync();
+
+
+                var busyTerens = await _terminiDBContext.Termins
+                    .Where(t => !(t.TerminDo <= dateDTO.TerminOd || t.TerminOd >= dateDTO.TerminDo))
+                    .Select(t => t.TerenId)
+                    .Distinct()
+                    .ToListAsync();
+
+
+                var freeTerens = allTerens
+                    .Where(t => !busyTerens.Contains(t.TerenId))
+                    .ToList();
+
+                return Ok(freeTerens);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-
         }
 
         [HttpGet("TerensByClient/{clientId}")]
