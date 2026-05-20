@@ -42,12 +42,12 @@ namespace Termini_Api.Controllers
             return Ok("Termin queued successfully.");
         }
 
-        [HttpGet("OldTermins")]
-        public async Task<ActionResult<List<Termin>>> GetOldTermins()
+        [HttpGet("OldTermins/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetOldTermins(long id)
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminOd <= DateTime.UtcNow).ToListAsync();
+                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo <= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)
@@ -56,12 +56,12 @@ namespace Termini_Api.Controllers
             }
         }
 
-        [HttpGet("NewTermins")]
-        public async Task<ActionResult<List<Termin>>> GetNewTermins()
+        [HttpGet("NewTermins/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetNewTermins(long id)
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminOd >= DateTime.UtcNow).ToListAsync();
+                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo >= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)

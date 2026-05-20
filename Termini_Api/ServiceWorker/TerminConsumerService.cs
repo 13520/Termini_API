@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -47,12 +48,22 @@ public class TerminConsumerService : BackgroundService
 
             if (!exists)
             {
+                var durationHours = (dto.TerminDo - dto.TerminOd).TotalHours;
+
+                var pricePerHour = await db.TerminPrices
+                .Where(tp => tp.TerenId == dto.TerenId)
+                .Select(tp => tp.Price)
+                .FirstOrDefaultAsync();
+
+                var fullPrice = pricePerHour * (decimal)durationHours;
+
                 var termin = new Termin
                 {
                     TerminOd = dto.TerminOd,
                     TerminDo = dto.TerminDo,
                     Teren = teren,
-                    Beneficiary = beneficiary
+                    Beneficiary = beneficiary,
+                    FullPrice = fullPrice
                 };
 
                 await db.Termins.AddAsync(termin);

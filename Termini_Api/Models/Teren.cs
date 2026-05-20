@@ -22,6 +22,8 @@ namespace Termini_Api.Models
 
         public long? ClientId { get; set; }
         public Client? Client { get; set; }
+        public string? Address { get; set; }
+        public bool IsClosed { get; set; }
 
         public ICollection<Termin> Termins { get; set; } = new List<Termin>();
     }

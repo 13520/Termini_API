@@ -17,6 +17,8 @@ namespace Termini_Api.TerminiDbContext
         public DbSet<Teren> Terens { get; set; }
         public DbSet<Termin> Termins { get; set; }
 
+        public DbSet<TerminPrice> TerminPrices { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Default: TPH (Users table with Discriminator). Keep default unless you want TPT.
