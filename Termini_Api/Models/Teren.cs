@@ -26,5 +26,6 @@ namespace Termini_Api.Models
         public bool IsClosed { get; set; }
 
         public ICollection<Termin> Termins { get; set; } = new List<Termin>();
+        public ICollection<Review> Reviews { get; set; }
     }
 }

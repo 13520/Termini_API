@@ -150,6 +150,22 @@ namespace Termini_Api.Controllers
             }
         }
 
+        [HttpGet("{terenId}")]
+        public async Task<ActionResult> GetTerensById(int terenId)
+        {
+            try
+            {
+                var terens = await _terminiDBContext.Terens
+                                                    .Where(t => t.TerenId == terenId && t.IsClosed == false)
+                                                    .ToListAsync();
+                return Ok(terens);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPut]
         public async Task<ActionResult> UpdateTeren([FromBody] TerenDTO terenDTO)
         {

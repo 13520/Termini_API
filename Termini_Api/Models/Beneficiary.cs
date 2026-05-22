@@ -3,5 +3,6 @@
     public class Beneficiary : User
     {
         // Use UserId from base class; do not declare BeneficiaryId
+        public ICollection<Review> Reviews { get; set; }
     }
 }

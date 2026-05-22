@@ -72,6 +72,63 @@ namespace Termini_Api.Controllers
             }
         }
 
+        [HttpGet("NewTerminsByClient/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetNewTerminsByClient(long id)
+        {
+            try
+            {
+                
+                var clientTerens = await _terminiDBContext.Terens
+                                                          .Where(t => t.ClientId == id)
+                                                          .Select(t => (long?)t.TerenId)
+                                                          .ToListAsync();
+
+                if (!clientTerens.Any())
+                {
+                    return NotFound($"Client {id} do not have registered courts.");
+                }
+
+                var termins = await _terminiDBContext.Termins
+                    .Where(t => clientTerens.Contains(t.TerenId) && t.TerminDo >= DateTime.UtcNow)
+                    .ToListAsync();
+
+                return Ok(termins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("OldTerminsByClient/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetOldTerminsByClient(long id)
+        {
+            try
+            {
+
+                var clientTerens = await _terminiDBContext.Terens
+                                                          .Where(t => t.ClientId == id)
+                                                          .Select(t => (long?)t.TerenId)
+                                                          .ToListAsync();
+
+                if (!clientTerens.Any())
+                {
+                    return NotFound($"Client {id} do not have registered courts.");
+                }
+
+                var termins = await _terminiDBContext.Termins
+                    .Where(t => clientTerens.Contains(t.TerenId) && t.TerminDo <= DateTime.UtcNow)
+                    .ToListAsync();
+
+                return Ok(termins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
         //[HttpPost]  LEFT FOR TESTING PURPOSES, TO BE REMOVED IN PRODUCTION
         //public async Task<ActionResult> CreateTermin([FromBody] TerminDTO dto)
         //{
