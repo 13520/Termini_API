@@ -77,20 +77,10 @@ namespace Termini_Api.Controllers
             {
                 User? userLogin = null;
 
-                if (user.UserEmail == null && user.UserName != null)
-                {
-                    userLogin = await _terminiDBContext.Users
-                        .FirstOrDefaultAsync(u => u.UserName == user.UserName && u.Password == user.Password);
-                }
-                else if (user.UserEmail != null && user.UserName == null)
-                {
-                    userLogin = await _terminiDBContext.Users
+                
+                userLogin = await _terminiDBContext.Users
                         .FirstOrDefaultAsync(u => u.UserEmail == user.UserEmail && u.Password == user.Password);
-                }
-                else
-                {
-                    return BadRequest("Please provide either UserName or UserEmail for login.");
-                }
+
 
                 if (userLogin == null)
                 {
@@ -103,7 +93,6 @@ namespace Termini_Api.Controllers
                 return Ok(new { 
                                 Token = token,
                                 UserId = userLogin.UserId,
-                                UserName = userLogin.UserName,
                                 UserEmail = userLogin.UserEmail,
                                 FName = userLogin.FName,
                                 LName = userLogin.LName,
@@ -122,7 +111,6 @@ namespace Termini_Api.Controllers
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Email, user.UserEmail ?? ""),
                 new Claim("UserId", user.UserId.ToString())
             };
@@ -134,7 +122,7 @@ namespace Termini_Api.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpireMinutes"])),
+                expires: DateTime.UtcNow.AddMonths(3),//DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpireMinutes"])),
                 signingCredentials: creds);
         
             return new JwtSecurityTokenHandler().WriteToken(token);

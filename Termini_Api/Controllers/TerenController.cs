@@ -122,9 +122,30 @@ namespace Termini_Api.Controllers
                     .ToListAsync();
 
 
+                //var freeTerens = allTerens
+                //    .Where(t => !busyTerens.Contains(t.TerenId) && t.IsClosed == false)
+                //    .ToList();
                 var freeTerens = allTerens
-                    .Where(t => !busyTerens.Contains(t.TerenId) && t.IsClosed == false)
-                    .ToList();
+                                 .Where(t => !busyTerens.Contains(t.TerenId) && t.IsClosed == false && t.IsDeleted == false)
+                                 .Select(t => new
+                                 {
+                                     t.TerenId,
+                                     t.TerenName,
+                                     t.CityId,
+                                     t.SportId,
+                                     t.ClientId,
+                                     t.OpenFrom,
+                                     t.OpenTo,
+                                     t.Address,
+                                     t.ImageBase64,
+                                     AverageGrade = Math.Round(_terminiDBContext.Reviews
+                                                                                        .Where(r => r.TerenId == t.TerenId)
+                                                                                        .Select(r => (double?)r.Grade)
+                                                                                        .Average() ?? 0, 2
+                                                                                 )
+                                 })
+                                 .ToList();
+
 
                 return Ok(freeTerens);
             }
@@ -140,7 +161,24 @@ namespace Termini_Api.Controllers
             try
             {
                 var terens = await _terminiDBContext.Terens
-                                                    .Where(t => t.ClientId == clientId && t.IsClosed == false)
+                                                    .Where(t => t.ClientId == clientId && t.IsClosed == false && t.IsDeleted == false)
+                                                    .Select(t => new
+                                                    {
+                                                        t.TerenId,
+                                                        t.TerenName,
+                                                        t.CityId,
+                                                        t.SportId,
+                                                        t.ClientId,
+                                                        t.OpenFrom,
+                                                        t.OpenTo,
+                                                        t.Address,
+                                                        t.ImageBase64,
+                                                        AverageGrade = Math.Round(_terminiDBContext.Reviews
+                                                                                        .Where(r => r.TerenId == t.TerenId)
+                                                                                        .Select(r => (double?)r.Grade)
+                                                                                        .Average() ?? 0, 2
+                                                                                 )
+                                                    })
                                                     .ToListAsync();
                 return Ok(terens);
             }
@@ -156,8 +194,25 @@ namespace Termini_Api.Controllers
             try
             {
                 var terens = await _terminiDBContext.Terens
-                                                    .Where(t => t.TerenId == terenId && t.IsClosed == false)
-                                                    .ToListAsync();
+                                                    .Where(t => t.TerenId == terenId && t.IsClosed == false && t.IsDeleted == false)
+                                                    .Select(t => new
+                                                    {
+                                                        t.TerenId,
+                                                        t.TerenName,
+                                                        t.CityId,
+                                                        t.SportId,
+                                                        t.ClientId,
+                                                        t.OpenFrom,
+                                                        t.OpenTo,
+                                                        t.Address,
+                                                        t.ImageBase64,
+                                                        AverageGrade = Math.Round(_terminiDBContext.Reviews
+                                                                                        .Where(r => r.TerenId == t.TerenId)
+                                                                                        .Select(r => (double?)r.Grade)
+                                                                                        .Average() ?? 0, 2
+                                                                                 )
+                                                    })
+                                                    .FirstAsync();
                 return Ok(terens);
             }
             catch (Exception ex)
@@ -201,7 +256,8 @@ namespace Termini_Api.Controllers
                 var teren = await _terminiDBContext.Terens.FindAsync(terenId);
                 if (teren == null)
                     return NotFound("Teren not found.");
-                _terminiDBContext.Terens.Remove(teren);
+                teren.IsDeleted = true;
+
                 await _terminiDBContext.SaveChangesAsync();
                 return Ok("Teren deleted successfully.");
             }

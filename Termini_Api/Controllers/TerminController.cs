@@ -33,15 +33,22 @@ namespace Termini_Api.Controllers
                 return BadRequest("Termin data is null.");
 
             // Publish DTO u RabbitMQ
-            var json = JsonSerializer.Serialize(dto);
-            var body = Encoding.UTF8.GetBytes(json);
+            if (dto.TerminOd <= dto.TerminDo && dto.TerminDo >= dto.TerminOd.AddHours(1))
+            {
+                var json = JsonSerializer.Serialize(dto);
+                var body = Encoding.UTF8.GetBytes(json);
 
-            _channel.BasicPublish(exchange: "",
-                                  routingKey: "termins",
-                                  basicProperties: null,
-                                  body: body);
+                _channel.BasicPublish(exchange: "",
+                                      routingKey: "termins",
+                                      basicProperties: null,
+                                      body: body);
 
-            return Ok("Termin queued successfully.");
+                return Ok("Termin queued successfully.");
+            }
+            else
+            {
+                return BadRequest("TerminOd must be before TerminDo.");
+            }
         }
 
         [HttpGet("OldTermins/{id}")]
@@ -51,6 +58,24 @@ namespace Termini_Api.Controllers
             {
                 var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo <= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
                 return Ok(termins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("IsRated/{id}")]
+        public async Task<ActionResult> MarkTerminAsRated(long id)
+        {
+            try
+            {
+                var termin = await _terminiDBContext.Termins.FindAsync(id);
+                if (termin == null)
+                    return NotFound($"Termin with ID {id} not found.");
+                termin.IsRated = true;
+                await _terminiDBContext.SaveChangesAsync();
+                return Ok("Termin marked as rated.");
             }
             catch (Exception ex)
             {

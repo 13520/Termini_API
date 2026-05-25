@@ -63,7 +63,8 @@ public class TerminConsumerService : BackgroundService
                     TerminDo = dto.TerminDo,
                     Teren = teren,
                     Beneficiary = beneficiary,
-                    FullPrice = fullPrice
+                    FullPrice = fullPrice,
+                    IsRated = false
                 };
 
                 await db.Termins.AddAsync(termin);
