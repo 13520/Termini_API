@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,16 +18,16 @@ namespace Termini_Api.Controllers
     public class TerminController : ControllerBase
     {
         public readonly TerminiDBContext _terminiDBContext;
-        private readonly IModel _channel;
+        private readonly IChannel _channel;
 
-        public TerminController(TerminiDBContext terminiDBContext, IModel channel)
+        public TerminController(TerminiDBContext terminiDBContext, IChannel channel)
         {
             _terminiDBContext = terminiDBContext;
             _channel = channel;
         }
 
         [HttpPost]
-        public async Task<ActionResult> CreateTermin([FromBody] TerminDTO dto)
+        public async Task<ActionResult> CreateTermin([FromBody] TerminDTO dto, CancellationToken cancellationToken)
         {
             if (dto == null)
                 return BadRequest("Termin data is null.");
@@ -38,10 +38,12 @@ namespace Termini_Api.Controllers
                 var json = JsonSerializer.Serialize(dto);
                 var body = Encoding.UTF8.GetBytes(json);
 
-                _channel.BasicPublish(exchange: "",
-                                      routingKey: "termins",
-                                      basicProperties: null,
-                                      body: body);
+            _channel.BasicPublishAsync(
+                exchange: "",
+                routingKey: "termins",
+                mandatory: true, 
+                body:  body, 
+                cancellationToken);
 
                 return Ok("Termin queued successfully.");
             }

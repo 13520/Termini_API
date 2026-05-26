@@ -8,6 +8,7 @@ using RabbitMQ.Client;
 using System;
 using System.Text;
 using System.Threading;
+using Scalar.AspNetCore;
 using Termini_Api;
 using Termini_Api.TerminiDbContext;
 
@@ -23,25 +24,31 @@ builder.Services.AddDbContext<TerminiDBContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DBConnection")));
 
 // RabbitMQ connection
-builder.Services.AddSingleton<IConnection>(sp =>
+// Build the RabbitMQ connection once at startup
+var factory = new ConnectionFactory
 {
-    var factory = new ConnectionFactory()
-    {
-        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ"))
-    };
-    return factory.CreateConnection();
-});
+    Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ"))
+};
 
-builder.Services.AddSingleton<IModel>(sp =>
+var connection = await factory.CreateConnectionAsync();
+builder.Services.AddSingleton<IConnection>(connection);
+
+// Register a channel factory using async API
+builder.Services.AddSingleton<Func<Task<IChannel>>>(sp =>
 {
-    var connection = sp.GetRequiredService<IConnection>();
-    var channel = connection.CreateModel();
-    channel.QueueDeclare(queue: "termins",
-                         durable: true,
-                         exclusive: false,
-                         autoDelete: false,
-                         arguments: null);
-    return channel;
+    var conn = sp.GetRequiredService<IConnection>();
+    return async () =>
+    {
+        var channel = await conn.CreateChannelAsync();
+        await channel.QueueDeclareAsync(
+            queue: "termins",
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
+
+        return channel;
+    };
 });
 
 // Background service za consumer
@@ -73,6 +80,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Termini API")
+            .WithTheme(ScalarTheme.DeepSpace)
+            .WithSidebar(true)
+            .WithDefaultHttpClient(ScalarTarget.JavaScript, ScalarClient.Axios);
+    });
 }
 
 app.UseHttpsRedirection();

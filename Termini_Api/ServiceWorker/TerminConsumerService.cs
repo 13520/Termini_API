@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
@@ -11,19 +11,23 @@ using Termini_Api.TerminiDbContext;
 
 public class TerminConsumerService : BackgroundService
 {
-    private readonly IModel _channel;
+    private readonly IConnection _connection;
+    private IChannel _channel;
     private readonly IServiceProvider _serviceProvider;
 
-    public TerminConsumerService(IModel channel, IServiceProvider serviceProvider)
+    public TerminConsumerService(IConnection  connection, IServiceProvider serviceProvider)
     {
-        _channel = channel;
+        _connection = connection;
         _serviceProvider = serviceProvider;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_channel);
-        consumer.Received += async (model, ea) =>
+        _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        
+        var consumer = new  AsyncEventingBasicConsumer(_channel);
+ 
+        consumer.ReceivedAsync += async (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
@@ -67,15 +71,14 @@ public class TerminConsumerService : BackgroundService
                     IsRated = false
                 };
 
-                await db.Termins.AddAsync(termin);
-                await db.SaveChangesAsync();
+                await db.Termins.AddAsync(termin,cancellationToken);
+                await db.SaveChangesAsync(cancellationToken);
             }
         };
 
-        _channel.BasicConsume(queue: "termins",
+        _channel.BasicConsumeAsync(queue: "termins",
                               autoAck: true,
-                              consumer: consumer);
-
-        return Task.CompletedTask;
+                              consumer: consumer,
+                              cancellationToken);
     }
 }
