@@ -48,6 +48,7 @@ public class TerminConsumerService : BackgroundService
             bool exists = db.Termins.Any(t =>
                 t.TerminOd == dto.TerminOd &&
                 t.TerminDo == dto.TerminDo &&
+                
                 t.Teren.TerenId == dto.TerenId);
 
             if (!exists)

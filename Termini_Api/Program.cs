@@ -34,22 +34,21 @@ var connection = await factory.CreateConnectionAsync();
 builder.Services.AddSingleton<IConnection>(connection);
 
 // Register a channel factory using async API
-builder.Services.AddSingleton<Func<Task<IChannel>>>(sp =>
+builder.Services.AddSingleton<IChannel>(sp =>
 {
     var conn = sp.GetRequiredService<IConnection>();
-    return async () =>
-    {
-        var channel = await conn.CreateChannelAsync();
-        await channel.QueueDeclareAsync(
-            queue: "termins",
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
+    var channel = conn.CreateChannelAsync().GetAwaiter().GetResult(); // blokira async
+    channel.QueueDeclareAsync(
+        queue: "termins",
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null
+    ).GetAwaiter().GetResult();
 
-        return channel;
-    };
+    return channel;
 });
+
 
 // Background service za consumer
 builder.Services.AddHostedService<TerminConsumerService>();
