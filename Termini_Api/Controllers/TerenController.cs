@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Humanizer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,7 @@ namespace Termini_Api.Controllers
                     };
                 }).ToList();
 
+
                 terminPriceEntities = terens.Where(dto => dto.PricePerHour.HasValue)
                                             .Select(dto =>
                                             {
@@ -82,7 +84,7 @@ namespace Termini_Api.Controllers
                                                     t.SportId == dto.SportId &&
                                                     t.ClientId == dto.ClientId &&
                                                     t.TerenName == dto.TerenName);
-                                            
+
                                                 return new TerminPrice
                                                 {
                                                     Price = dto.PricePerHour.Value,
@@ -121,7 +123,7 @@ namespace Termini_Api.Controllers
                     .Distinct()
                     .ToListAsync();
 
-
+                var durationHours = (dateDTO.TerminDo - dateDTO.TerminOd).TotalHours;
                 //var freeTerens = allTerens
                 //    .Where(t => !busyTerens.Contains(t.TerenId) && t.IsClosed == false)
                 //    .ToList();
@@ -138,6 +140,10 @@ namespace Termini_Api.Controllers
                                      t.OpenTo,
                                      t.Address,
                                      t.ImageBase64,
+                                     FullPrice = _terminiDBContext.TerminPrices
+                                                                  .Where(tp => tp.TerenId == t.TerenId)
+                                                                  .Select(tp => tp.Price)
+                                                                  .FirstOrDefault() * (decimal)durationHours,
                                      AverageGrade = Math.Round(_terminiDBContext.Reviews
                                                                                         .Where(r => r.TerenId == t.TerenId)
                                                                                         .Select(r => (double?)r.Grade)
@@ -173,6 +179,10 @@ namespace Termini_Api.Controllers
                                                         t.OpenTo,
                                                         t.Address,
                                                         t.ImageBase64,
+                                                        PricePerHour = Math.Round(_terminiDBContext.TerminPrices
+                                                                                  .Where(tp => tp.TerenId == t.TerenId)
+                                                                                  .Select(tp => tp.Price)
+                                                                                  .FirstOrDefault(), 2),
                                                         AverageGrade = Math.Round(_terminiDBContext.Reviews
                                                                                         .Where(r => r.TerenId == t.TerenId)
                                                                                         .Select(r => (double?)r.Grade)
@@ -206,6 +216,10 @@ namespace Termini_Api.Controllers
                                                         t.OpenTo,
                                                         t.Address,
                                                         t.ImageBase64,
+                                                        PricePerHour = Math.Round(_terminiDBContext.TerminPrices
+                                                                                  .Where(tp => tp.TerenId == terenId)
+                                                                                  .Select(tp => tp.Price)
+                                                                                  .FirstOrDefault(), 2),
                                                         AverageGrade = Math.Round(_terminiDBContext.Reviews
                                                                                         .Where(r => r.TerenId == t.TerenId)
                                                                                         .Select(r => (double?)r.Grade)

@@ -56,7 +56,21 @@ namespace Termini_Api.Controllers
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo <= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
+                var termins = await _terminiDBContext.Termins
+                                                     .Where(t => t.TerminDo <= DateTime.UtcNow && t.BeneficiaryId == id)
+                                                     .Select(t => 
+                                                     new { 
+                                                        TerminId = t.TerminId,
+                                                        TerminOd = t.TerminOd,
+                                                        TerminDo = t.TerminDo,
+                                                        TerenName = _terminiDBContext.Terens.Where(tr => tr.TerenId == t.TerenId).Select(t => t.TerenName).FirstOrDefault(),
+                                                        TerenId = t.TerenId,
+                                                        BeneficiaryId = t.BeneficiaryId,
+                                                        FullPrice = t.FullPrice,
+                                                        IsRated = t.IsRated,
+                                                     })
+                                                     .OrderBy(t => t.TerminOd)
+                                                     .ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)
@@ -88,7 +102,21 @@ namespace Termini_Api.Controllers
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo >= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
+                var termins = await _terminiDBContext.Termins
+                                                     .Where(t => t.TerminDo >= DateTime.UtcNow && t.BeneficiaryId == id)
+                                                     .Select(t =>
+                                                     new {
+                                                         TerminId = t.TerminId,
+                                                         TerminOd = t.TerminOd,
+                                                         TerminDo = t.TerminDo,
+                                                         TerenName = _terminiDBContext.Terens.Where(tr => tr.TerenId == t.TerenId).Select(t => t.TerenName).FirstOrDefault(),
+                                                         TerenId = t.TerenId,
+                                                         BeneficiaryId = t.BeneficiaryId,
+                                                         FullPrice = t.FullPrice,
+                                                         IsRated = t.IsRated,
+                                                     })
+                                                     .OrderBy(t => t.TerminOd)
+                                                     .ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)
