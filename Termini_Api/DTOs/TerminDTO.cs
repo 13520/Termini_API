@@ -7,5 +7,6 @@
         public DateTime TerminDo { get; set; }
         public long TerenId { get; set; }
         public long BeneficiaryId { get; set; }
+        public bool IsRated { get; set; }
     }
 }

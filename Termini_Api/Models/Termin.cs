@@ -17,5 +17,9 @@ namespace Termini_Api.Models
 
         public long? BeneficiaryId { get; set; }
         public Beneficiary? Beneficiary { get; set; }
+
+        public decimal? FullPrice { get; set; }
+
+        public bool IsRated { get; set; } 
     }
 }

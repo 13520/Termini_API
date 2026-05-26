@@ -16,11 +16,25 @@ namespace Termini_Api.TerminiDbContext
         public DbSet<Sport> Sports { get; set; }
         public DbSet<Teren> Terens { get; set; }
         public DbSet<Termin> Termins { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<TerminPrice> TerminPrices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Default: TPH (Users table with Discriminator). Keep default unless you want TPT.
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Beneficiary)
+                .WithMany(b => b.Reviews)
+                .HasForeignKey(r => r.BeneficiaryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Teren)
+                .WithMany(c => c.Reviews)
+                .HasForeignKey(r => r.TerenId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

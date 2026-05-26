@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +12,7 @@ using Termini_Api.TerminiDbContext;
 
 namespace Termini_Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TerminController : ControllerBase
@@ -29,8 +33,10 @@ namespace Termini_Api.Controllers
                 return BadRequest("Termin data is null.");
 
             // Publish DTO u RabbitMQ
-            var json = JsonSerializer.Serialize(dto);
-            var body = Encoding.UTF8.GetBytes(json);
+            if (dto.TerminOd <= dto.TerminDo && dto.TerminDo >= dto.TerminOd.AddHours(1))
+            {
+                var json = JsonSerializer.Serialize(dto);
+                var body = Encoding.UTF8.GetBytes(json);
 
             _channel.BasicPublishAsync(
                 exchange: "",
@@ -39,15 +45,20 @@ namespace Termini_Api.Controllers
                 body:  body, 
                 cancellationToken);
 
-            return Ok("Termin queued successfully.");
+                return Ok("Termin queued successfully.");
+            }
+            else
+            {
+                return BadRequest("TerminOd must be before TerminDo.");
+            }
         }
 
-        [HttpGet("OldTermins")]
-        public async Task<ActionResult<List<Termin>>> GetOldTermins()
+        [HttpGet("OldTermins/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetOldTermins(long id)
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminOd <= DateTime.UtcNow).ToListAsync();
+                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo <= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)
@@ -56,12 +67,30 @@ namespace Termini_Api.Controllers
             }
         }
 
-        [HttpGet("NewTermins")]
-        public async Task<ActionResult<List<Termin>>> GetNewTermins()
+        [HttpPut("IsRated/{id}")]
+        public async Task<ActionResult> MarkTerminAsRated(long id)
         {
             try
             {
-                var termins = await _terminiDBContext.Termins.Where(t => t.TerminOd >= DateTime.UtcNow).ToListAsync();
+                var termin = await _terminiDBContext.Termins.FindAsync(id);
+                if (termin == null)
+                    return NotFound($"Termin with ID {id} not found.");
+                termin.IsRated = true;
+                await _terminiDBContext.SaveChangesAsync();
+                return Ok("Termin marked as rated.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("NewTermins/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetNewTermins(long id)
+        {
+            try
+            {
+                var termins = await _terminiDBContext.Termins.Where(t => t.TerminDo >= DateTime.UtcNow && t.BeneficiaryId == id).ToListAsync();
                 return Ok(termins);
             }
             catch (Exception ex)
@@ -69,6 +98,63 @@ namespace Termini_Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("NewTerminsByClient/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetNewTerminsByClient(long id)
+        {
+            try
+            {
+                
+                var clientTerens = await _terminiDBContext.Terens
+                                                          .Where(t => t.ClientId == id)
+                                                          .Select(t => (long?)t.TerenId)
+                                                          .ToListAsync();
+
+                if (!clientTerens.Any())
+                {
+                    return NotFound($"Client {id} do not have registered courts.");
+                }
+
+                var termins = await _terminiDBContext.Termins
+                    .Where(t => clientTerens.Contains(t.TerenId) && t.TerminDo >= DateTime.UtcNow)
+                    .ToListAsync();
+
+                return Ok(termins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("OldTerminsByClient/{id}")]
+        public async Task<ActionResult<List<Termin>>> GetOldTerminsByClient(long id)
+        {
+            try
+            {
+
+                var clientTerens = await _terminiDBContext.Terens
+                                                          .Where(t => t.ClientId == id)
+                                                          .Select(t => (long?)t.TerenId)
+                                                          .ToListAsync();
+
+                if (!clientTerens.Any())
+                {
+                    return NotFound($"Client {id} do not have registered courts.");
+                }
+
+                var termins = await _terminiDBContext.Termins
+                    .Where(t => clientTerens.Contains(t.TerenId) && t.TerminDo <= DateTime.UtcNow)
+                    .ToListAsync();
+
+                return Ok(termins);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
 
         //[HttpPost]  LEFT FOR TESTING PURPOSES, TO BE REMOVED IN PRODUCTION
         //public async Task<ActionResult> CreateTermin([FromBody] TerminDTO dto)
