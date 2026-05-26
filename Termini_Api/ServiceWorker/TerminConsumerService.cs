@@ -11,17 +11,20 @@ using Termini_Api.TerminiDbContext;
 
 public class TerminConsumerService : BackgroundService
 {
-    private readonly IChannel  _channel;
+    private readonly IConnection _connection;
+    private IChannel _channel;
     private readonly IServiceProvider _serviceProvider;
 
-    public TerminConsumerService(IChannel  channel, IServiceProvider serviceProvider)
+    public TerminConsumerService(IConnection  connection, IServiceProvider serviceProvider)
     {
-        _channel = channel;
+        _connection = connection;
         _serviceProvider = serviceProvider;
     }
 
-    protected override Task ExecuteAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        
         var consumer = new  AsyncEventingBasicConsumer(_channel);
  
         consumer.ReceivedAsync += async (model, ea) =>
@@ -77,7 +80,5 @@ public class TerminConsumerService : BackgroundService
                               autoAck: true,
                               consumer: consumer,
                               cancellationToken);
-
-        return Task.CompletedTask;
     }
 }

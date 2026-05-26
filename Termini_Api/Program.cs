@@ -8,6 +8,7 @@ using RabbitMQ.Client;
 using System;
 using System.Text;
 using System.Threading;
+using Scalar.AspNetCore;
 using Termini_Api;
 using Termini_Api.TerminiDbContext;
 
@@ -49,6 +50,7 @@ builder.Services.AddSingleton<Func<Task<IChannel>>>(sp =>
         return channel;
     };
 });
+
 // Background service za consumer
 builder.Services.AddHostedService<TerminConsumerService>();
 
@@ -78,6 +80,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Termini API")
+            .WithTheme(ScalarTheme.DeepSpace)
+            .WithSidebar(true)
+            .WithDefaultHttpClient(ScalarTarget.JavaScript, ScalarClient.Axios);
+    });
 }
 
 app.UseHttpsRedirection();
