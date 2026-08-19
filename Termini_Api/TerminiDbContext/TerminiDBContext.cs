@@ -18,6 +18,7 @@ namespace Termini_Api.TerminiDbContext
         public DbSet<Termin> Termins { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<TerminPrice> TerminPrices { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -167,11 +167,12 @@ namespace Termini_Api.Controllers
             try
             {
                 var terens = await _terminiDBContext.Terens
-                                                    .Where(t => t.ClientId == clientId && t.IsClosed == false && t.IsDeleted == false)
+                                                    .Where(t => t.ClientId == clientId  && t.IsDeleted == false)
                                                     .Select(t => new
                                                     {
                                                         t.TerenId,
                                                         t.TerenName,
+                                                        t.IsClosed,
                                                         t.CityId,
                                                         t.SportId,
                                                         t.ClientId,
@@ -240,9 +241,13 @@ namespace Termini_Api.Controllers
         {
             try
             {
-                var existingTeren = await _terminiDBContext.Terens.FindAsync(terenDTO.TerenId);
+                var existingTeren = await _terminiDBContext.Terens
+                    .FindAsync(terenDTO.TerenId);
+
                 if (existingTeren == null)
                     return NotFound("Teren not found.");
+
+                // Update Teren
                 existingTeren.TerenName = terenDTO.TerenName;
                 existingTeren.OpenFrom = terenDTO.OpenFrom;
                 existingTeren.OpenTo = terenDTO.OpenTo;
@@ -252,8 +257,29 @@ namespace Termini_Api.Controllers
                 existingTeren.ClientId = terenDTO.ClientId;
                 existingTeren.Address = terenDTO.Address;
                 existingTeren.IsClosed = terenDTO.IsClosed;
-                _terminiDBContext.Terens.Update(existingTeren);
+
+                // Update TerminPrice
+                var existingTerminPrice = await _terminiDBContext.TerminPrices
+                    .FirstOrDefaultAsync(tp => tp.TerenId == terenDTO.TerenId);
+
+                if (existingTerminPrice != null && terenDTO.PricePerHour.HasValue)
+                {
+                    existingTerminPrice.Price = terenDTO.PricePerHour.Value;
+                }
+                else if (existingTerminPrice == null && terenDTO.PricePerHour.HasValue)
+                {
+                    // Ako teren nema cenu, napravi novu
+                    var newTerminPrice = new TerminPrice
+                    {
+                        TerenId = terenDTO.TerenId,
+                        Price = terenDTO.PricePerHour.Value
+                    };
+
+                    await _terminiDBContext.TerminPrices.AddAsync(newTerminPrice);
+                }
+
                 await _terminiDBContext.SaveChangesAsync();
+
                 return Ok("Teren updated successfully.");
             }
             catch (Exception ex)

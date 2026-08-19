@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RabbitMQ.Client;
-using System.Text;
 using Microsoft.OpenApi;
+using RabbitMQ.Client;
 using Scalar.AspNetCore;
+using System.Text;
 using Termini_Api.TerminiDbContext;
 
 
@@ -31,16 +31,16 @@ builder.Services.AddOpenApi(options =>
             Name = "Authorization",
             Description = "Enter 'Bearer {your JWT token}'"
         };
-        
+
         // // Apply Bearer requirement globally
-        
+
         document.Security ??= new List<OpenApiSecurityRequirement>();
         var securityRequirement = new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>() 
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
         };
         document.Security.Add(securityRequirement);
-        
+
         return Task.CompletedTask;
     });
 });

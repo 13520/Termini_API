@@ -63,6 +63,7 @@ namespace Termini_Api.Controllers
                                                      .Select(t => 
                                                      new { 
                                                         TerminId = t.TerminId,
+                                                        
                                                         TerminOd = t.TerminOd,
                                                         TerminDo = t.TerminDo,
                                                         TerenName = _terminiDBContext.Terens.Where(tr => tr.TerenId == t.TerenId).Select(t => t.TerenName).FirstOrDefault(),
