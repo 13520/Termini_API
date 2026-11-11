@@ -69,6 +69,7 @@ namespace Termini_Api.Controllers
                                                         TerenName = _terminiDBContext.Terens.Where(tr => tr.TerenId == t.TerenId).Select(t => t.TerenName).FirstOrDefault(),
                                                         TerenId = t.TerenId,
                                                         BeneficiaryId = t.BeneficiaryId,
+                                                        ClientID = t.ClientId,
                                                         FullPrice = t.FullPrice,
                                                         IsRated = t.IsRated,
                                                      })
